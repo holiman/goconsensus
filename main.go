@@ -115,7 +115,6 @@ var ruleset = map[string]envvars{
 func deliverTests(root string) chan *Testcase {
 	out := make(chan *Testcase)
 	go func() {
-		var num = 10
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if info.IsDir() {
 				return nil
@@ -137,13 +136,9 @@ func deliverTests(root string) chan *Testcase {
 				}
 				out <- t
 			}
-			num--
-			if num == 0 {
-				close(out)
-				return fmt.Errorf("tests done")
-			}
 			return nil
 		})
+		close(out)
 	}()
 	return out
 }
