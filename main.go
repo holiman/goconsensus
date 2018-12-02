@@ -251,7 +251,7 @@ func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 			i += 1
 		}
 	}
-	log.Info("excutor finished", "num_executed", i)
+	log.Info("executor finished", "num_executed", i)
 }
 
 func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
