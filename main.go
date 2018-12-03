@@ -114,6 +114,7 @@ var ruleset = map[string]envvars{
 
 func deliverTests(root string) chan *Testcase {
 	out := make(chan *Testcase)
+	var i, j = 0, 0
 	go func() {
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if info.IsDir() {
@@ -128,16 +129,19 @@ func deliverTests(root string) chan *Testcase {
 				log.Error("error", "err", err)
 				return err
 			}
+			j = j + 1
 			for name, blocktest := range tests {
 				t := &Testcase{blockTest: &blocktest, name: name}
 				if err := t.validate(); err != nil {
 					log.Error("error", "err", err, "test", t.name)
-					return nil
+					continue
 				}
+				i = i + 1
 				out <- t
 			}
 			return nil
 		})
+		log.Info("file iterator done", "files", j, "tests", i)
 		close(out)
 	}()
 	return out
@@ -242,8 +246,7 @@ func (t *Testcase) finished(err error) {
 
 func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 	var i = 0
-	select {
-	case t := <-testChan:
+	for t := range testChan {
 		for _, client := range be.clients {
 			if err := be.runTest(t, client); err != nil {
 				log.Error("error", "err", err)
