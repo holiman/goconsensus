@@ -266,11 +266,15 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	)
 	var done = func(err error) {
 		t.finished(err)
+		log.Info("reporting", "id", t.nodeId)
 		if len(t.nodeId) > 0 {
-			be.api.AddResults(t.err == nil, t.nodeId, t.name, t.details(), time.Since(start))
+			if err = be.api.AddResults(t.err == nil, t.nodeId, t.name, t.details(), time.Since(start)); err != nil {
+				log.Info("errors occurred when adding results", "err", err)
+			}
 			// No longer needed to call KillNode, it gets terminated in AddResults
 			//be.api.KillNode(t.nodeId)
 		}
+		log.Info("reporting done", "id", t.nodeId)
 	}
 	defer done(err)
 	genesis, _, blocks, err := t.artefacts()
