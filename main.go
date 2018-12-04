@@ -290,12 +290,10 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	t.updateEnv(env)
 
 	// spin up a node
-	log.Info("requesting new node")
 	nodeid, ip, err := be.api.StartNewNode(env)
 	if err != nil {
 		return err
 	}
-	log.Info("node up", "id", nodeid, "ip", ip)
 	t.nodeId = nodeid
 	client, err := geth.NewEthereumClient(fmt.Sprintf("http://%s:8545", ip.String()))
 	if err != nil {
@@ -309,9 +307,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 
 	// verify preconditions
 	ctx := geth.NewContext().WithTimeout(int64(10 * time.Second))
-	log.Info("checking precond", "id", nodeid)
 	nodeGenesis, err := client.GetBlockByNumber(ctx, 0)
-	log.Info("checking precond ok", "id", nodeid)
 	if err != nil {
 		err = fmt.Errorf("failed to check genesis: %v", err)
 		return err
@@ -325,10 +321,8 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		return err
 	}
 	// verify postconditions
-	log.Info("checking postcond", "id", nodeid)
 	ctx = geth.NewContext().WithTimeout(int64(10 * time.Second))
 	lastBlock, err := client.GetBlockByNumber(ctx, -1)
-	log.Info("checking postcond ok", "id", nodeid)
 	if err != nil {
 		return err
 	}
@@ -362,7 +356,7 @@ func main() {
 	fileRoot := fmt.Sprintf("%s/BlockchainTests/", testpath)
 	testCh := deliverTests(fileRoot)
 	var wg sync.WaitGroup
-	for i := 0; i < runtime.GOMAXPROCS(-1); i++ {
+	for i := 0; i < 12; i++ {
 		wg.Add(1)
 		go func() {
 			b := BlocktestExecutor{api: host, clients: availableClients}
