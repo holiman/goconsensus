@@ -304,7 +304,9 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 
 	// verify preconditions
 	ctx := geth.NewContext().WithTimeout(int64(10 * time.Second))
+	log.Info("checking precond", "id", nodeid)
 	nodeGenesis, err := client.GetBlockByNumber(ctx, 0)
+	log.Info("checking precond ok", "id", nodeid)
 	if err != nil {
 		err = fmt.Errorf("failed to check genesis: %v", err)
 		return err
@@ -318,8 +320,10 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		return err
 	}
 	// verify postconditions
+	log.Info("checking postcond", "id", nodeid)
 	ctx = geth.NewContext().WithTimeout(int64(10 * time.Second))
 	lastBlock, err := client.GetBlockByNumber(ctx, -1)
+	log.Info("checking postcond ok", "id", nodeid)
 	if err != nil {
 		return err
 	}
