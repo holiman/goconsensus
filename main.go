@@ -290,6 +290,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	t.updateEnv(env)
 
 	// spin up a node
+	log.Info("requesting new node")
 	nodeid, ip, err := be.api.StartNewNode(env)
 	if err != nil {
 		return err
