@@ -303,7 +303,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	//}
 
 	// verify preconditions
-	ctx := geth.NewContext()
+	ctx := geth.NewContext().WithTimeout(int64(10 * time.Second))
 	nodeGenesis, err := client.GetBlockByNumber(ctx, 0)
 	if err != nil {
 		err = fmt.Errorf("failed to check genesis: %v", err)
@@ -318,6 +318,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		return err
 	}
 	// verify postconditions
+	ctx = geth.NewContext().WithTimeout(int64(10 * time.Second))
 	lastBlock, err := client.GetBlockByNumber(ctx, -1)
 	if err != nil {
 		return err
