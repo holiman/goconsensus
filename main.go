@@ -153,8 +153,6 @@ type BlocktestExecutor struct {
 }
 
 type Testcase struct {
-	err       error
-	executed  bool
 	name      string
 	blockTest *BlockTest
 	nodeId    string
@@ -232,17 +230,6 @@ func (t *Testcase) verifyBestblock(got []byte) error {
 	}
 	return nil
 }
-func (t *Testcase) details() string {
-	if t.err != nil {
-		return t.err.Error()
-	}
-	return ""
-}
-
-func (t *Testcase) finished(err error) {
-	t.err = err
-	t.executed = true
-}
 
 func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 	var i = 0
@@ -264,19 +251,24 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	var (
 		err error
 	)
-	var done = func(err error) {
-		t.finished(err)
-		log.Info("reporting", "id", t.nodeId)
-		if len(t.nodeId) > 0 {
-			if err = be.api.AddResults(t.err == nil, t.nodeId, t.name, t.details(), time.Since(start)); err != nil {
+	var done = func() {
+		var (
+			errString = ""
+			success   = (err == nil)
+		)
+		if !success {
+			errString = err.Error()
+		}
+		if id := t.nodeId; id != "" {
+			log.Info("reporting", "id", t.nodeId, "err", err)
+			if err = be.api.AddResults(success, id, t.name, errString, time.Since(start)); err != nil {
 				log.Info("errors occurred when adding results", "err", err)
 			}
-			// No longer needed to call KillNode, it gets terminated in AddResults
-			//be.api.KillNode(t.nodeId)
+		} else {
+			log.Info("Error occurred, but no node to report to", "test", t.name, "err", err)
 		}
-		log.Info("reporting done", "id", t.nodeId)
 	}
-	defer done(err)
+	defer done()
 	genesis, _, blocks, err := t.artefacts()
 	if err != nil {
 		return err
