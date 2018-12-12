@@ -112,8 +112,8 @@ var ruleset = map[string]envvars{
 	},
 }
 
-func deliverTests(root string) chan *Testcase {
-	out := make(chan *Testcase)
+func deliverTests(root string) chan Testcase {
+	out := make(chan Testcase)
 	var i, j = 0, 0
 	go func() {
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -131,7 +131,7 @@ func deliverTests(root string) chan *Testcase {
 			}
 			j = j + 1
 			for name, blocktest := range tests {
-				t := &Testcase{blockTest: &blocktest, name: name , filepath: path}
+				t := Testcase{blockTest: &blocktest, name: name , filepath: path}
 				if err := t.validate(); err != nil {
 					log.Error("error", "err", err, "test", t.name)
 					continue
@@ -233,7 +233,7 @@ func (t *Testcase) verifyBestblock(got []byte) error {
 	return nil
 }
 
-func (be *BlocktestExecutor) run(testChan chan *Testcase) {
+func (be *BlocktestExecutor) run(testChan chan Testcase) {
 	var i = 0
 	for t := range testChan {
 		for _, client := range be.clients {
@@ -246,7 +246,7 @@ func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 	log.Info("executor finished", "num_executed", i)
 }
 
-func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
+func (be *BlocktestExecutor) runTest(t Testcase, clientType string) error {
 	// get the artefacts
 	log.Info("starting test", "name", t.name, "file", t.filepath)
 	start := time.Now()
