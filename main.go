@@ -228,7 +228,7 @@ func (t *Testcase) verifyGenesis(got []byte) error {
 }
 func (t *Testcase) verifyBestblock(got []byte) error {
 	if exp := t.blockTest.json.BestBlock; bytes.Compare(exp[:], got) != 0 {
-		return fmt.Errorf("last block mismatch, expectd 0x%x got 0x%x", exp, got)
+		return fmt.Errorf("last block mismatch, expectd 0x%x got 0x%x (%v %v)", exp, got, t.name, t.filepath)
 	}
 	return nil
 }
