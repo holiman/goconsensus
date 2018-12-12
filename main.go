@@ -131,7 +131,7 @@ func deliverTests(root string) chan *Testcase {
 			}
 			j = j + 1
 			for name, blocktest := range tests {
-				t := &Testcase{blockTest: &blocktest, name: name}
+				t := &Testcase{blockTest: &blocktest, name: name , filepath: path}
 				if err := t.validate(); err != nil {
 					log.Error("error", "err", err, "test", t.name)
 					continue
@@ -156,6 +156,7 @@ type Testcase struct {
 	name      string
 	blockTest *BlockTest
 	nodeId    string
+	filepath  string
 }
 
 // validate returns error if the network is not defined
@@ -215,6 +216,7 @@ func (t *Testcase) artefacts() (string, string, string, error) {
 			return "", "", "", fmt.Errorf("failed writing block %d: %v", i, err)
 		}
 	}
+	log.Info("Test artefacts", "testname", t.name, "testfile", t.filepath, "blockfolder", blockFolder)
 	return genesisFile, "", blockFolder, nil
 }
 
@@ -246,7 +248,7 @@ func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 
 func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	// get the artefacts
-	log.Info("starting test", "name", t.name)
+	log.Info("starting test", "name", t.name, "file", t.filepath)
 	start := time.Now()
 	var (
 		err error
@@ -261,7 +263,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		}
 		if id := t.nodeId; id != "" {
 			log.Info("reporting", "id", t.nodeId, "err", err)
-			if err = be.api.AddResults(success, id, t.name, errString, time.Since(start)); err != nil {
+			if err = be.api.AddResults(success, id, t.filepath, errString, time.Since(start)); err != nil {
 				log.Info("errors occurred when adding results", "err", err)
 			}
 		} else {
