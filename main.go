@@ -350,7 +350,7 @@ func main() {
 	fileRoot := fmt.Sprintf("%s/BlockchainTests/", testpath)
 	testCh := deliverTests(fileRoot)
 	var wg sync.WaitGroup
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 1; i++ {
 		wg.Add(1)
 		go func() {
 			b := BlocktestExecutor{api: host, clients: availableClients}
