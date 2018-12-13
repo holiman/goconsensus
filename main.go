@@ -112,8 +112,8 @@ var ruleset = map[string]envvars{
 	},
 }
 
-func deliverTests(root string) chan Testcase {
-	out := make(chan Testcase)
+func deliverTests(root string) chan *Testcase {
+	out := make(chan *Testcase)
 	var i, j = 0, 0
 	go func() {
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -131,13 +131,18 @@ func deliverTests(root string) chan Testcase {
 			}
 			j = j + 1
 			for name, blocktest := range tests {
-				t := Testcase{blockTest: &blocktest, name: name , filepath: path}
+				// t is declared explicitly here, if implicit := - declaration is used,
+				// golang will reuse the underlying object, and overwrite the object while it's being tested
+				// by a separate thread.
+				// That is also the reason that blocktest within the struct is by-value instead of by-reference
+				var t Testcase
+				t = Testcase{blockTest: blocktest, name: name, filepath: path}
 				if err := t.validate(); err != nil {
 					log.Error("error", "err", err, "test", t.name)
 					continue
 				}
 				i = i + 1
-				out <- t
+				out <- &t
 			}
 			return nil
 		})
@@ -154,7 +159,7 @@ type BlocktestExecutor struct {
 
 type Testcase struct {
 	name      string
-	blockTest *BlockTest
+	blockTest BlockTest
 	nodeId    string
 	filepath  string
 }
@@ -233,7 +238,7 @@ func (t *Testcase) verifyBestblock(got []byte) error {
 	return nil
 }
 
-func (be *BlocktestExecutor) run(testChan chan Testcase) {
+func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 	var i = 0
 	for t := range testChan {
 		for _, client := range be.clients {
@@ -246,7 +251,7 @@ func (be *BlocktestExecutor) run(testChan chan Testcase) {
 	log.Info("executor finished", "num_executed", i)
 }
 
-func (be *BlocktestExecutor) runTest(t Testcase, clientType string) error {
+func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	// get the artefacts
 	log.Info("starting test", "name", t.name, "file", t.filepath)
 	start := time.Now()
@@ -350,7 +355,7 @@ func main() {
 	fileRoot := fmt.Sprintf("%s/BlockchainTests/", testpath)
 	testCh := deliverTests(fileRoot)
 	var wg sync.WaitGroup
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 12; i++ {
 		wg.Add(1)
 		go func() {
 			b := BlocktestExecutor{api: host, clients: availableClients}
