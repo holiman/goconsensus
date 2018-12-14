@@ -289,6 +289,10 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		"HIVE_INIT_GENESIS":  genesis,
 		"HIVE_INIT_BLOCKS":   blocks,
 		"HIVE_FORK_DAO_VOTE": "1",
+		// If we don't supply these, hive will spin up a temporary container to copy
+		// default-values from
+		"HIVE_INIT_CHAIN": "ignore",
+		"HIVE_INIT_KEYS":  "ignore",
 	}
 	t.updateEnv(env)
 
