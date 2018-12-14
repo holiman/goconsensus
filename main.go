@@ -268,7 +268,11 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		}
 		if id := t.nodeId; id != "" {
 			log.Info("reporting", "id", t.nodeId, "err", err)
-			if err = be.api.AddResults(success, id, t.filepath, errString, time.Since(start)); err != nil {
+			testname := fmt.Sprintf("%s:%s", t.filepath, t.name)
+			if strings.HasPrefix(testname, "/tests/") {
+				testname = fmt.Sprintf(".", testname)
+			}
+			if err = be.api.AddResults(success, id, testname, errString, time.Since(start)); err != nil {
 				log.Info("errors occurred when adding results", "err", err)
 			}
 		} else {
