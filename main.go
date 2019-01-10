@@ -270,7 +270,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 			log.Info("reporting", "id", t.nodeId, "err", err)
 			testname := fmt.Sprintf("%s:%s", t.filepath, t.name)
 			if strings.HasPrefix(testname, "/tests/") {
-				testname = fmt.Sprintf(".", testname)
+				testname = fmt.Sprintf(".%s", testname)
 			}
 			if err = be.api.AddResults(success, id, testname, errString, time.Since(start)); err != nil {
 				log.Info("errors occurred when adding results", "err", err)
