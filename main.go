@@ -119,6 +119,15 @@ var ruleset = map[string]envvars{
 		"HIVE_FORK_BYZANTIUM":      0,
 		"HIVE_FORK_CONSTANTINOPLE": 5,
 	},
+	"ByzantiumToConstantinopleFixAt5": {
+		"HIVE_FORK_HOMESTEAD":      0,
+		"HIVE_FORK_TANGERINE":      0,
+		"HIVE_FORK_SPURIOUS":       0,
+		"HIVE_FORK_DAO_BLOCK":      2000,
+		"HIVE_FORK_BYZANTIUM":      0,
+		"HIVE_FORK_CONSTANTINOPLE": 5,
+		"HIVE_FORK_PETERSBURG":     5,
+	},
 }
 
 func deliverTests(root string) chan *Testcase {
