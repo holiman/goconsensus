@@ -342,7 +342,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	//}
 
 	// verify preconditions
-	ctx := geth.NewContext().WithTimeout(int64(10 * time.Second))
+	ctx := geth.NewContext()
 	nodeGenesis, err := client.GetBlockByNumber(ctx, 0)
 	if err != nil {
 		err = fmt.Errorf("failed to check genesis: %v", err)
@@ -357,7 +357,6 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		return err
 	}
 	// verify postconditions
-	ctx = geth.NewContext().WithTimeout(int64(10 * time.Second))
 	lastBlock, err := client.GetBlockByNumber(ctx, -1)
 	if err != nil {
 		return err
@@ -392,7 +391,7 @@ func main() {
 	fileRoot := fmt.Sprintf("%s/BlockchainTests/", testpath)
 	testCh := deliverTests(fileRoot)
 	var wg sync.WaitGroup
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 16; i++ {
 		wg.Add(1)
 		go func() {
 			b := BlocktestExecutor{api: host, clients: availableClients}
@@ -400,6 +399,6 @@ func main() {
 			wg.Done()
 		}()
 	}
-	log.Info("Tests started", "num threads", runtime.GOMAXPROCS(-1))
+	log.Info("Tests started", "num threads", 16)
 	wg.Wait()
 }
