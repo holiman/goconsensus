@@ -309,6 +309,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	}
 	defer done()
 	genesis, _, blocks, err := t.artefacts()
+	t1 := time.Now()
 	if err != nil {
 		return err
 	}
@@ -323,9 +324,9 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		"HIVE_INIT_KEYS":  "ignore",
 	}
 	t.updateEnv(env)
-
 	// spin up a node
 	nodeid, ip, err := be.api.StartNewNode(env)
+	t2 := time.Now()
 	if err != nil {
 		return err
 	}
@@ -343,6 +344,8 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	// verify preconditions
 	ctx := geth.NewContext()
 	nodeGenesis, err := client.GetBlockByNumber(ctx, 0)
+	t3 := time.Now()
+
 	if err != nil {
 		err = fmt.Errorf("failed to check genesis: %v", err)
 		return err
@@ -355,14 +358,18 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	if err = t.verifyGenesis((*gotHash).GetBytes()); err != nil {
 		return err
 	}
+	t4 := time.Now()
 	// verify postconditions
 	lastBlock, err := client.GetBlockByNumber(ctx, -1)
 	if err != nil {
 		return err
 	}
+	t5 := time.Now()
 	if err = t.verifyBestblock(lastBlock.GetHash().GetBytes()); err != nil {
 		return err
 	}
+	t6 := time.Now()
+	log.Info("times", "artefacts", t1.Sub(start), "newnode", t2.Sub(t1), "getGenesis", t3.Sub(t2), "verifyGenesis", t4.Sub(t3), "getLatest", t5.Sub(t4), "verifyLatest", t6.Sub(t5))
 	return nil
 }
 

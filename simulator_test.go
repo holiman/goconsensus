@@ -42,18 +42,19 @@ func (fakeApi) KillNode(string) error {
 	panic("implement me")
 }
 
-type FakeTestExecutor struct{
+type FakeTestExecutor struct {
 	id int
 }
+
 func (f *FakeTestExecutor) run(testChan chan *Testcase) {
 	var i = 0
 	for t := range testChan {
-		fmt.Printf("worker(%d) objects %p %p\n", f.id,t,  &(t.blockTest))
+		fmt.Printf("worker(%d) objects %p %p\n", f.id, t, &(t.blockTest))
 		i += 1
 	}
 }
 
-func TestDelivery(t *testing.T){
+func TestDelivery(t *testing.T) {
 	//Try to connect to the simulator host and get the client list
 	//hivesim := "none"
 	//host := &common.SimulatorHost{
