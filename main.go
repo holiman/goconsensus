@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -229,19 +230,23 @@ func toGethGenesis(test *btJSON) *core.Genesis {
 }
 
 func (t *Testcase) artefacts() (string, string, string, error) {
-	if err := os.Mkdir(fmt.Sprintf("./%s", t.name), 0700); err != nil {
+
+	key := fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%s%s", t.filepath, t.name))))
+	blockFolder := fmt.Sprintf("./%s/blocks", key)
+
+	if err := os.Mkdir(fmt.Sprintf("./%s", key), 0700); err != nil {
 		return "", "", "", err
 	}
-	if err := os.Mkdir(fmt.Sprintf("./%s/blocks", t.name), 0700); err != nil {
+	if err := os.Mkdir(blockFolder, 0700); err != nil {
 		return "", "", "", err
 	}
 	genesis := toGethGenesis(&(t.blockTest.json))
 	genBytes, _ := json.Marshal(genesis)
-	genesisFile := fmt.Sprintf("./%v/genesis.json", t.name)
+	genesisFile := fmt.Sprintf("./%v/genesis.json", key)
 	if err := ioutil.WriteFile(genesisFile, genBytes, 0777); err != nil {
 		return "", "", "", fmt.Errorf("failed writing genesis: %v", err)
 	}
-	blockFolder := fmt.Sprintf("./%s/blocks", t.name)
+
 	for i, block := range t.blockTest.json.Blocks {
 		rlpdata := common2.FromHex(block.Rlp)
 		fname := fmt.Sprintf("%s/%04d.rlp", blockFolder, i+1)
@@ -249,7 +254,7 @@ func (t *Testcase) artefacts() (string, string, string, error) {
 			return "", "", "", fmt.Errorf("failed writing block %d: %v", i, err)
 		}
 	}
-	log.Info("Test artefacts", "testname", t.name, "testfile", t.filepath, "blockfolder", blockFolder)
+	//log.Info("Test artefacts", "testname", t.name, "testfile", t.filepath, "blockfolder", blockFolder)
 	return genesisFile, "", blockFolder, nil
 }
 
@@ -281,7 +286,7 @@ func (be *BlocktestExecutor) run(testChan chan *Testcase) {
 
 func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	// get the artefacts
-	log.Info("starting test", "name", t.name, "file", t.filepath)
+	log.Info("Starting test", "name", t.name, "file", t.filepath)
 	start := time.Now()
 	var (
 		err error
@@ -369,7 +374,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		return err
 	}
 	t6 := time.Now()
-	log.Info("times", "artefacts", t1.Sub(start), "newnode", t2.Sub(t1), "getGenesis", t3.Sub(t2), "verifyGenesis", t4.Sub(t3), "getLatest", t5.Sub(t4), "verifyLatest", t6.Sub(t5))
+	log.Info("Test done","name", t.name, "artefacts", t1.Sub(start), "newnode", t2.Sub(t1), "getGenesis", t3.Sub(t2), "verifyGenesis", t4.Sub(t3), "getLatest", t5.Sub(t4), "verifyLatest", t6.Sub(t5))
 	return nil
 }
 
