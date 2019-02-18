@@ -2,10 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/rpc"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +19,6 @@ import (
 	common2 "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/mobile"
 	"github.com/ethereum/hive/simulators/common"
 )
 
@@ -336,48 +339,56 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 		return err
 	}
 	t.nodeId = nodeid
-	client, err := geth.NewEthereumClient(fmt.Sprintf("http://%s:8545", ip.String()))
+	ctx := context.Background()
+	rawClient, err := rpc.DialContext(ctx, fmt.Sprintf("http://%s:8545", ip.String()))
 	if err != nil {
+		err = fmt.Errorf("failed to start client: %v", err)
 		return err
-	} // set version
-
-	//v, err := client.EthereumClient.getVersion()
-	//if err != nil {
-	//	return err
-	//}
-
-	// verify preconditions
-	ctx := geth.NewContext()
-	nodeGenesis, err := client.GetBlockByNumber(ctx, 0)
-	t3 := time.Now()
-
+	}
+	genesisHash, err := getHash(rawClient, hexutil.EncodeBig(new(big.Int)))
 	if err != nil {
 		err = fmt.Errorf("failed to check genesis: %v", err)
 		return err
 	}
-	gotHash := nodeGenesis.GetHash()
-	if gotHash == nil {
-		return fmt.Errorf("got nil genesis")
-	}
+	t3 := time.Now()
 
-	if err = t.verifyGenesis((*gotHash).GetBytes()); err != nil {
+	if err = t.verifyGenesis(genesisHash); err != nil {
 		return err
 	}
 	t4 := time.Now()
 	// verify postconditions
-	lastBlock, err := client.GetBlockByNumber(ctx, -1)
+	lastHash, err := getHash(rawClient, "latest")
 	if err != nil {
 		return err
 	}
 	t5 := time.Now()
-	if err = t.verifyBestblock(lastBlock.GetHash().GetBytes()); err != nil {
+	if err = t.verifyBestblock(lastHash); err != nil {
 		return err
 	}
 	t6 := time.Now()
-	log.Info("Test done","name", t.name, "artefacts", t1.Sub(start), "newnode", t2.Sub(t1), "getGenesis", t3.Sub(t2), "verifyGenesis", t4.Sub(t3), "getLatest", t5.Sub(t4), "verifyLatest", t6.Sub(t5))
+	log.Info("Test done", "name", t.name, "artefacts", t1.Sub(start), "newnode", t2.Sub(t1), "getGenesis", t3.Sub(t2), "verifyGenesis", t4.Sub(t3), "getLatest", t5.Sub(t4), "verifyLatest", t6.Sub(t5))
 	return nil
 }
 
+func getHash(rawClient *rpc.Client, arg string) ([]byte, error) {
+	blockData := make(map[string]interface{})
+	if err := rawClient.Call(&blockData, "eth_getBlockByNumber", arg, false); err != nil {
+		// Make one more attempt
+		log.Info("Client connect failed, making one more attempt...")
+		if err = rawClient.Call(&blockData, "eth_getBlockByNumber", arg, false); err != nil {
+			return nil, err
+		}
+	}
+	if hash, exist := blockData["hash"]; !exist {
+		return nil, fmt.Errorf("no hash found in response")
+	} else {
+		if hexHash, ok := hash.(string); !ok {
+			return nil, fmt.Errorf("error: string conversion failed for %v", hash)
+		} else {
+			return common2.HexToHash(hexHash).Bytes(), nil
+		}
+	}
+}
 func main() {
 	hivesim, isset := os.LookupEnv("HIVE_SIMULATOR")
 
