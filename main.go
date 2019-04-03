@@ -333,7 +333,7 @@ func (be *BlocktestExecutor) runTest(t *Testcase, clientType string) error {
 	}
 	t.updateEnv(env)
 	// spin up a node
-	nodeid, ip, err := be.api.StartNewNode(env)
+	nodeid, ip, _, err := be.api.StartNewNode(env)
 	t2 := time.Now()
 	if err != nil {
 		return err
